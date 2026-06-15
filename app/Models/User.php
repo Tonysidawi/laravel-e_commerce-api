@@ -1,0 +1,81 @@
+<?php
+
+namespace App\Models;
+
+// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Database\Factories\UserFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Laravel\Sanctum\HasApiTokens;
+
+class User extends Authenticatable
+{
+    /** @use HasFactory<UserFactory> */
+    use HasApiTokens, HasFactory, Notifiable;
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var list<string>
+     */
+    protected $guarded = [
+        'id'
+    ];
+
+    /**
+     * The attributes that should be hidden for serialization.
+     *
+     * @var list<string>
+     */
+    protected $hidden = [
+        'password',
+        'remember_token',
+    ];
+
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'email_verified_at' => 'datetime',
+            'password' => 'hashed',
+        ];
+    }
+
+    // crud
+    public static function createUser(array $attributes)
+    {
+        $user = new self();
+        $user->first_name = Arr::get($attributes, 'first_name');
+        $user->last_name = Arr::get($attributes, 'last_name');
+        $user->email = Arr::get($attributes, 'email');
+        $user->password = Arr::get($attributes, 'password');
+        $user->phone_number = Arr::get($attributes, 'phone_number');
+        $user->profile_picture = Arr::get($attributes, 'profile_picture');
+        $user->status = Arr::get($attributes, 'status');
+        $user->role = Arr::get($attributes, 'role');
+        $user->save();
+
+        return $user;
+    }
+
+    public static function updateMe(array $data): self
+    {
+        $user = auth()->user();
+
+        $user->fill($data)->save();
+
+        return $user;
+    }
+
+    // relationships
+    public function stores(): HasMany
+    {
+        return $this->hasMany(Store::class);
+    }
+}
