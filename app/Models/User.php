@@ -64,7 +64,7 @@ class User extends Authenticatable
         return $user;
     }
 
-    public static function updateMe(array $data): self
+    public static function updateUser(array $data): self
     {
         $user = auth()->user();
 

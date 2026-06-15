@@ -8,18 +8,27 @@ use App\Http\Resources\UserResource;
 
 class UserController extends Controller
 {
+    /**
+     * Update the specified resource in storage.
+     */
     public function update(UserUpdateRequest $request)
     {
-        $user = User::updateMe($request->all());
+        $user = User::updateUser($request->all());
 
         return $this->success(new UserResource($user), 'Profile updated successfully');
     }
 
+    /**
+     * Display the specified resource.
+     */
     public function show()
     {
         return $this->success(new UserResource(auth()->user()));
     }
 
+    /**
+     * Remove the specified resource from storage.
+     */
     public function destroy(User $user)
     {
         $user->delete();

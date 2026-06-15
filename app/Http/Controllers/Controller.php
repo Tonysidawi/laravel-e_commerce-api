@@ -6,6 +6,9 @@ use Illuminate\Http\JsonResponse;
 
 abstract class Controller
 {
+    /**
+     * Return a successful response.
+     */
     public function success($data = [], string $message = '', $responseCode = 200): JsonResponse
     {
         return response()->json([
@@ -15,6 +18,9 @@ abstract class Controller
         ], $responseCode);
     }
 
+    /**
+     * Return an error response.
+     */
     public function error($data = [], string $message = '', $responseCode = 400): JsonResponse
     {
         return response()->json([

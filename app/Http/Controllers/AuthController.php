@@ -13,6 +13,9 @@ use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
+    /**
+     * Register a new user.
+     */
     public function register(RegisterRequest $request)
     {
         $user = User::create($request->validated());
@@ -22,6 +25,9 @@ class AuthController extends Controller
         return UserResource::make($user)->response()->setStatusCode(200);
     }
 
+    /**
+     * Login a user.
+     */
     public function login(LoginRequest $request)
     {
         $user = User::where('email', $request->email)->first();
@@ -39,6 +45,9 @@ class AuthController extends Controller
         return UserResource::make($user);
     }
 
+    /**
+     * Logout a user.
+     */
     public function logout(Request $request)
     {
         $request->user()->currentAccessToken()?->delete();
@@ -48,6 +57,9 @@ class AuthController extends Controller
         ], 200);
     }
 
+    /**
+     * Reset a user's password.
+     */
     public function resetPassword(ResetPasswordRequest $request)
     {
         $user = User::where('email', $request->email)->first();

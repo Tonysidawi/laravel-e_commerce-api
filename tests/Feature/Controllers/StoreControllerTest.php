@@ -42,7 +42,7 @@ class StoreControllerTest extends TestCase
 
         Sanctum::actingAs($user);
 
-        $this->postJson('/api/stores', [
+        $data = [
             'name' => 'Test Store',
             'phone_number' => '0244444444',
             'location' => 'Test Location',
@@ -68,7 +68,9 @@ class StoreControllerTest extends TestCase
                 'name' => 'photo.jpg',
                 'content_type' => 'image/jpeg',
             ]],
-        ])
+        ];
+
+        $this->postJson('/api/stores', $data)
             ->assertSuccessful()
             ->assertJson(
                 fn (AssertableJson $json) => $json
@@ -82,18 +84,19 @@ class StoreControllerTest extends TestCase
     public function test_user_can_update_a_store(): void
     {
         $user = User::factory()->has(Store::factory())->create();
-        $store = $user->stores->first();
 
-        Sanctum::actingAs($user);
-
-        $this->putJson("/api/stores/{$store->id}", [
+        $updateData = [
             'name' => 'Updated Store',
             'phone_number' => '0244444444',
             'location' => 'Test Location',
             'city' => 'Test City',
             'region' => 'Test Region',
             'district' => 'Test District',
-        ])
+        ];
+
+        Sanctum::actingAs($user);
+
+        $this->putJson("/api/stores/{$user->stores->first()->id}", $updateData)
             ->assertSuccessful()
             ->assertJson(
                 fn (AssertableJson $json) => $json
