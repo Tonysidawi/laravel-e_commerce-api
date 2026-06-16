@@ -1,10 +1,10 @@
 <?php
 
 namespace App\Http\Controllers;
-use App\Http\Requests\UserUpdateRequest;
+
+use App\Http\Requests\User\UserUpdateRequest;
+use App\Http\Resources\User\UserResource;
 use App\Models\User;
-use Illuminate\Http\Request;
-use App\Http\Resources\UserResource;
 
 class UserController extends Controller
 {
@@ -35,6 +35,4 @@ class UserController extends Controller
 
         return $this->success([], 'User deleted successfully');
     }
-
-
 }

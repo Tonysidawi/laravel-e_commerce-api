@@ -1,18 +1,19 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\Home;
 
+use App\Models\Product;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
-class StoreIndexRequest extends FormRequest
+class HomePageIndexRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool
     {
-        return auth()->check();
+        return true;
     }
 
     /**
@@ -27,11 +28,11 @@ class StoreIndexRequest extends FormRequest
         ];
     }
 
-    public function getStores()
+    public function getProducts()
     {
-        return auth()->user()->stores()
-            ->with('images')
+        return Product::query()
+            ->with('store', 'productCategory', 'images')
             ->orderByDesc('created_at')
-            ->paginate($this->input('per_page', 10));
+            ->paginate($this->input('per_page', 20));
     }
 }

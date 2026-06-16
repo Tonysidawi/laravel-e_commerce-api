@@ -28,9 +28,12 @@ class Store extends Model
         ];
     }
 
+    /**
+     * Crud methods.
+     */
     public static function createStore(array $attributes): self
     {
-        $store = new self();
+        $store = new self;
         $store->user_id = auth()->id();
         $store->name = Arr::get($attributes, 'name');
         $store->phone_number = Arr::get($attributes, 'phone_number');
@@ -107,6 +110,17 @@ class Store extends Model
         }
     }
 
+    /**
+     * Table relations
+     */
+    public function loadStoreRelations()
+    {
+        return $this->load('images');
+    }
+
+    /**
+     * Relationships
+     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
@@ -115,5 +129,10 @@ class Store extends Model
     public function images(): HasMany
     {
         return $this->hasMany(Image::class);
+    }
+
+    public function products(): HasMany
+    {
+        return $this->hasMany(Product::class);
     }
 }

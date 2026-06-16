@@ -2,12 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Http\Requests\StoreIndexRequest;
-use App\Http\Resources\StoreResource;
-use App\Http\Requests\StoreRequest;
+use App\Http\Requests\Store\StoreIndexRequest;
+use App\Http\Requests\Store\StoreRequest;
+use App\Http\Requests\Store\StoreUpdateResquest;
+use App\Http\Resources\Store\StoreResource;
 use App\Models\Store;
-use App\Http\Requests\StoreUpdateResquest;
 
 class StoreController extends Controller
 {
@@ -16,7 +15,10 @@ class StoreController extends Controller
      */
     public function index(StoreIndexRequest $request)
     {
-        return StoreResource::collection($request->getStores());
+        return StoreResource::collection(auth()->user()->stores()
+            ->with('images')
+            ->latest()
+            ->paginate($request->input('per_page', 10)));
     }
 
     /**
@@ -26,7 +28,7 @@ class StoreController extends Controller
     {
         $store = Store::createStore($request->validated());
 
-        return $this->success(new StoreResource($store), 'Store created successfully');
+        return $this->success(new StoreResource($store->loadStoreRelations()), 'Store created successfully');
     }
 
     /**
@@ -34,7 +36,7 @@ class StoreController extends Controller
      */
     public function show(Store $store)
     {
-        return $this->success(new StoreResource($store));
+        return $this->success(new StoreResource($store->loadStoreRelations()));
     }
 
     /**
@@ -44,7 +46,7 @@ class StoreController extends Controller
     {
         $store = Store::updateStore($store, $request->validated());
 
-        return $this->success(new StoreResource($store), 'Store updated successfully');
+        return $this->success(new StoreResource($store->loadStoreRelations()), 'Store updated successfully');
     }
 
     /**

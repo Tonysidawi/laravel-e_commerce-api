@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Resources;
+namespace App\Http\Resources\Store;
 
+use App\Http\Resources\Image\ImageResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -35,7 +36,7 @@ class StoreResource extends JsonResource
             'bio' => $this->bio,
             'is_active' => $this->is_active,
             'is_online' => $this->is_online,
-            'images' => ImageReource::collection($this->whenLoaded('images', fn () => $this->images)),
+            'images' => ImageResource::collection($this->whenLoaded('images', fn () => $this->images)),
             'products_count' => $this->products_count ?? 0,
             'services_count' => $this->services_count ?? 0,
             'created_at' => $this->created_at,

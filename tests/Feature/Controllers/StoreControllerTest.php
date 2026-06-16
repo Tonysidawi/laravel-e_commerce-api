@@ -6,7 +6,6 @@ use App\Models\Store;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Testing\Fluent\AssertableJson;
-use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 class StoreControllerTest extends TestCase
@@ -23,9 +22,7 @@ class StoreControllerTest extends TestCase
             ->has(Store::factory()->count(2))
             ->create();
 
-        Sanctum::actingAs($user);
-
-        $this->getJson('/api/stores')
+        $this->actingAs($user)->getJson('/api/stores')
             ->assertSuccessful()
             ->assertJson(
                 fn (AssertableJson $json) => $json
@@ -36,11 +33,23 @@ class StoreControllerTest extends TestCase
             );
     }
 
+    public function test_user_can_get_a_store(): void
+    {
+        $user = User::factory()->has(Store::factory())->create();
+
+        $this->actingAs($user)->getJson("/api/stores/{$user->stores->first()->id}")
+            ->assertSuccessful()
+            ->assertJson(
+                fn (AssertableJson $json) => $json
+                    ->has('data.id')
+                    ->has('data.name')
+                    ->etc()
+            );
+    }
+
     public function test_user_can_create_a_store(): void
     {
         $user = User::factory()->create();
-
-        Sanctum::actingAs($user);
 
         $data = [
             'name' => 'Test Store',
@@ -70,7 +79,7 @@ class StoreControllerTest extends TestCase
             ]],
         ];
 
-        $this->postJson('/api/stores', $data)
+        $this->actingAs($user)->postJson('/api/stores', $data)
             ->assertSuccessful()
             ->assertJson(
                 fn (AssertableJson $json) => $json
@@ -94,9 +103,7 @@ class StoreControllerTest extends TestCase
             'district' => 'Test District',
         ];
 
-        Sanctum::actingAs($user);
-
-        $this->putJson("/api/stores/{$user->stores->first()->id}", $updateData)
+        $this->actingAs($user)->putJson("/api/stores/{$user->stores->first()->id}", $updateData)
             ->assertSuccessful()
             ->assertJson(
                 fn (AssertableJson $json) => $json
@@ -111,9 +118,7 @@ class StoreControllerTest extends TestCase
         $user = User::factory()->has(Store::factory())->create();
         $store = $user->stores->first();
 
-        Sanctum::actingAs($user);
-
-        $this->deleteJson("/api/stores/{$store->id}")
+        $this->actingAs($user)->deleteJson("/api/stores/{$store->id}")
             ->assertSuccessful()
             ->assertJson([
                 'message' => 'Store deleted successfully',

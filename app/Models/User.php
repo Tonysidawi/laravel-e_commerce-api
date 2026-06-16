@@ -5,9 +5,10 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
@@ -21,7 +22,7 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $guarded = [
-        'id'
+        'id',
     ];
 
     /**
@@ -47,10 +48,12 @@ class User extends Authenticatable
         ];
     }
 
-    // crud
+    /**
+     * Crud methods.
+     */
     public static function createUser(array $attributes)
     {
-        $user = new self();
+        $user = new self;
         $user->first_name = Arr::get($attributes, 'first_name');
         $user->last_name = Arr::get($attributes, 'last_name');
         $user->email = Arr::get($attributes, 'email');
@@ -73,9 +76,16 @@ class User extends Authenticatable
         return $user;
     }
 
-    // relationships
+    /**
+     * Relationships
+     */
     public function stores(): HasMany
     {
         return $this->hasMany(Store::class);
+    }
+
+    public function products(): HasManyThrough
+    {
+        return $this->hasManyThrough(Product::class, Store::class);
     }
 }

@@ -14,6 +14,7 @@ class Image extends Model
     protected $fillable = [
         'id',
         'store_id',
+        'product_id',
         'key',
         'bucket',
         'name',
@@ -23,5 +24,10 @@ class Image extends Model
     public function store(): BelongsTo
     {
         return $this->belongsTo(Store::class);
+    }
+
+    public function product(): BelongsTo
+    {
+        return $this->belongsTo(Product::class, 'product_id');
     }
 }
