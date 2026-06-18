@@ -151,7 +151,6 @@ class ProductControllerTest extends TestCase
 
         $product->images()->create([
             'id' => '123e4567-e89b-12d3-a456-426614174000',
-            'store_id' => $store->id,
             'key' => 'tmp/photo.jpg',
             'name' => 'photo.jpg',
             'content_type' => 'image/jpeg',

@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Arr;
 
 class Product extends Model
@@ -26,6 +26,9 @@ class Product extends Model
         'price' => 'decimal:2',
     ];
 
+    /**
+     * CRUD
+     */
     public static function createProduct(array $attributes): self
     {
         $product = new self;
@@ -40,20 +43,6 @@ class Product extends Model
         static::syncImages($product, Arr::get($attributes, 'images', []));
 
         return $product->fresh(['images']);
-    }
-
-    protected static function syncImages(Product $product, array $images): void
-    {
-        foreach ($images as $image) {
-            $product->images()->create([
-                'id' => $image['id'],
-                'store_id' => $product->store_id,
-                'key' => $image['key'],
-                'bucket' => $image['bucket'] ?? null,
-                'name' => $image['name'],
-                'content_type' => $image['content_type'],
-            ]);
-        }
     }
 
     public static function updateProduct(Product $product, array $attributes): self
@@ -76,6 +65,19 @@ class Product extends Model
         return $product->fresh(['images']);
     }
 
+    protected static function syncImages(Product $product, array $images): void
+    {
+        foreach ($images as $image) {
+            $product->images()->create([
+                'id' => $image['id'],
+                'key' => $image['key'],
+                'bucket' => $image['bucket'] ?? null,
+                'name' => $image['name'],
+                'content_type' => $image['content_type'],
+            ]);
+        }
+    }
+
     /**
      * Table relations
      */
@@ -84,7 +86,8 @@ class Product extends Model
         return $this->load([
             'store',
             'productCategory',
-            'images', ]);
+            'images',
+        ]);
     }
 
     /**
@@ -105,8 +108,8 @@ class Product extends Model
         return $this->belongsTo(ProductCategory::class);
     }
 
-    public function images(): HasMany
+    public function images(): MorphMany
     {
-        return $this->hasMany(Image::class);
+        return $this->morphMany(Images::class, 'imageable');
     }
 }
