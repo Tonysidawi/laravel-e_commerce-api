@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Arr;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
@@ -60,8 +61,8 @@ class User extends Authenticatable
         $user->password = Arr::get($attributes, 'password');
         $user->phone_number = Arr::get($attributes, 'phone_number');
         $user->profile_picture = Arr::get($attributes, 'profile_picture');
-        $user->status = Arr::get($attributes, 'status');
-        $user->role = Arr::get($attributes, 'role');
+        $user->status = Arr::get($attributes, 'status', 'active');
+        $user->role = Arr::get($attributes, 'role', 'user');
         $user->save();
 
         return $user;
