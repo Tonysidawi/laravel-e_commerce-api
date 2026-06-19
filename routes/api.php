@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ImageController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\StoreController;
 use App\Http\Controllers\UserController;
@@ -25,3 +26,9 @@ Route::delete('stores/{store}', [StoreController::class, 'destroy']);
  * Product Routes
  */
 Route::apiResource('products', ProductController::class);
+
+/**
+ * Image Routes
+ */
+Route::post('images', [ImageController::class, 'store']);
+Route::delete('images/{image}', [ImageController::class, 'destroy']);

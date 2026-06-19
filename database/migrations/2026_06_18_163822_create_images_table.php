@@ -14,6 +14,7 @@ return new class extends Migration
             $table->string('bucket')->nullable();
             $table->string('name');
             $table->string('content_type');
+            $table->boolean('is_main')->default(false);
             $table->morphs('imageable');
             $table->timestamps();
         });

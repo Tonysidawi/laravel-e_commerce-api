@@ -74,8 +74,11 @@ class Product extends Model
                 'bucket' => $image['bucket'] ?? null,
                 'name' => $image['name'],
                 'content_type' => $image['content_type'],
+                'is_main' => $image['is_main'] ?? false,
             ]);
         }
+
+        $product->setMainImage();
     }
 
     /**
@@ -111,5 +114,14 @@ class Product extends Model
     public function images(): MorphMany
     {
         return $this->morphMany(Images::class, 'imageable');
+    }
+
+    public function setMainImage(): void
+    {
+        if ($this->images()->where('is_main', true)->exists()) {
+            return;
+        }
+
+        $this->images()->oldest('id')->first()?->update(['is_main' => true]);
     }
 }

@@ -89,4 +89,9 @@ class User extends Authenticatable
     {
         return $this->hasManyThrough(Product::class, Store::class);
     }
+
+    public function isOwnerOfStore(?Store $store): bool
+    {
+        return $store !== null && $this->id === $store->user_id;
+    }
 }

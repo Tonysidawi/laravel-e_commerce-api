@@ -107,16 +107,11 @@ class Store extends Model
                 'bucket' => $image['bucket'] ?? null,
                 'name' => $image['name'],
                 'content_type' => $image['content_type'],
+                'is_main' => $image['is_main'] ?? false,
             ]);
         }
-    }
 
-    /**
-     * Table relations
-     */
-    public function loadStoreRelations()
-    {
-        return $this->load('images');
+        $store->setMainImage();
     }
 
     /**
@@ -132,8 +127,25 @@ class Store extends Model
         return $this->morphMany(Images::class, 'imageable');
     }
 
+    public function setMainImage(): void
+    {
+        if ($this->images()->where('is_main', true)->exists()) {
+            return;
+        }
+
+        $this->images()->oldest('id')->first()?->update(['is_main' => true]);
+    }
+
     public function products(): HasMany
     {
         return $this->hasMany(Product::class);
+    }
+
+    /**
+     * Table relations
+     */
+    public function loadStoreRelations()
+    {
+        return $this->load('images');
     }
 }

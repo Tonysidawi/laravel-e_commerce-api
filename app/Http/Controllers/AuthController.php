@@ -68,7 +68,7 @@ class AuthController extends Controller
             return response()->json(['message' => 'User not found'], 202);
         }
 
-        $user->password = $request->password;
+        $user->password = Hash::make($request->password);
 
         $user->save();
 
