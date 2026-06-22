@@ -23,6 +23,10 @@ class StoreResource extends JsonResource
             'city' => $this->city,
             'region' => $this->region,
             'district' => $this->district,
+            'main_image' => $this->when(
+                $this->relationLoaded('mainImage') && $this->mainImage !== null,
+                fn () => new ImageResource($this->mainImage)
+            ),
             'website' => $this->website,
             'facebook' => $this->facebook,
             'instagram' => $this->instagram,

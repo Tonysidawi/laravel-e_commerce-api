@@ -20,6 +20,10 @@ class ProductResource extends JsonResource
             'store_id' => $this->store_id,
             'product_category_id' => $this->product_category_id,
             'name' => $this->name,
+            'main_image' => $this->when(
+                $this->relationLoaded('mainImage') && $this->mainImage !== null,
+                fn () => new ImageResource($this->mainImage)
+            ),
             'description' => $this->description,
             'price' => $this->price,
             'details' => $this->details,

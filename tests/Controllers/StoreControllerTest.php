@@ -86,6 +86,10 @@ class StoreControllerTest extends TestCase
                     ->where('message', 'Store created successfully')
                     ->where('data.name', 'Test Store')
                     ->where('data.phone_number', '0244444444')
+                    ->has('data.main_image')
+                    ->where('data.main_image.id', '123e4567-e89b-12d3-a456-426614174000')
+                    ->where('data.main_image.key', 'tmp/photo.jpg')
+                    ->where('data.main_image.is_main', true)
                     ->etc()
             );
     }

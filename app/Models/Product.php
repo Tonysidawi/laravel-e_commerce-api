@@ -2,15 +2,15 @@
 
 namespace App\Models;
 
+use App\HasImage;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Arr;
 
 class Product extends Model
 {
-    use HasFactory;
+    use HasFactory, HasImage;
 
     protected $fillable = [
         'store_id',
@@ -42,7 +42,7 @@ class Product extends Model
 
         static::syncImages($product, Arr::get($attributes, 'images', []));
 
-        return $product->fresh(['images']);
+        return $product->fresh(['images', 'mainImage']);
     }
 
     public static function updateProduct(Product $product, array $attributes): self
@@ -62,7 +62,7 @@ class Product extends Model
             static::syncImages($product, $attributes['images']);
         }
 
-        return $product->fresh(['images']);
+        return $product->fresh(['images', 'mainImage']);
     }
 
     protected static function syncImages(Product $product, array $images): void
@@ -90,6 +90,7 @@ class Product extends Model
             'store',
             'productCategory',
             'images',
+            'mainImage',
         ]);
     }
 
@@ -109,19 +110,5 @@ class Product extends Model
     public function productCategory(): BelongsTo
     {
         return $this->belongsTo(ProductCategory::class);
-    }
-
-    public function images(): MorphMany
-    {
-        return $this->morphMany(Images::class, 'imageable');
-    }
-
-    public function setMainImage(): void
-    {
-        if ($this->images()->where('is_main', true)->exists()) {
-            return;
-        }
-
-        $this->images()->oldest('id')->first()?->update(['is_main' => true]);
     }
 }

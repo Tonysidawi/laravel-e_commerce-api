@@ -21,6 +21,7 @@ class ImageControllerTest extends TestCase
         parent::setUp();
 
         Storage::fake('s3');
+        config(['filesystems.disks.s3.bucket' => 'test-bucket']);
     }
 
     public function test_user_can_upload_image_to_store(): void
@@ -119,5 +120,54 @@ class ImageControllerTest extends TestCase
             ->assertForbidden();
 
         $this->assertDatabaseCount('images', 0);
+    }
+
+    public function test_uploaded_store_image_appears_as_main_image_with_s3_url(): void
+    {
+        $user = User::factory()->create();
+        $store = Store::factory()->create(['user_id' => $user->id]);
+
+        $this->actingAs($user)->post('/api/images', [
+            'store_id' => $store->id,
+            'images' => UploadedFile::fake()->image('store-main.jpg'),
+        ], ['Accept' => 'application/json'])->assertSuccessful();
+
+        $image = Images::first();
+
+        $this->actingAs($user)->getJson("/api/stores/{$store->id}")
+            ->assertSuccessful()
+            ->assertJson(
+                fn (AssertableJson $json) => $json
+                    ->where('data.main_image.id', $image->id)
+                    ->where('data.main_image.key', $image->key)
+                    ->where('data.main_image.is_main', true)
+                    ->has('data.main_image.url')
+                    ->etc()
+            );
+    }
+
+    public function test_uploaded_product_image_appears_as_main_image_with_s3_url(): void
+    {
+        $user = User::factory()->create();
+        $store = Store::factory()->create(['user_id' => $user->id]);
+        $product = Product::factory()->create(['store_id' => $store->id]);
+
+        $this->actingAs($user)->post('/api/images', [
+            'product_id' => $product->id,
+            'images' => UploadedFile::fake()->image('product-main.jpg'),
+        ], ['Accept' => 'application/json'])->assertSuccessful();
+
+        $image = Images::first();
+
+        $this->actingAs($user)->getJson("/api/products/{$product->id}")
+            ->assertSuccessful()
+            ->assertJson(
+                fn (AssertableJson $json) => $json
+                    ->where('data.main_image.id', $image->id)
+                    ->where('data.main_image.key', $image->key)
+                    ->where('data.main_image.is_main', true)
+                    ->has('data.main_image.url')
+                    ->etc()
+            );
     }
 }

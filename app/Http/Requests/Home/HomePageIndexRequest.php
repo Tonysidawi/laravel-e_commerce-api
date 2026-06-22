@@ -31,7 +31,7 @@ class HomePageIndexRequest extends FormRequest
     public function getProducts()
     {
         return Product::query()
-            ->with('store', 'productCategory', 'images')
+            ->with('store', 'productCategory', 'images', 'mainImage')
             ->orderByDesc('created_at')
             ->paginate($this->input('per_page', 20));
     }

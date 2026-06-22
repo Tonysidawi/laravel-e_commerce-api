@@ -16,7 +16,7 @@ class ProductController extends Controller
     public function index(ProductIndexRequest $request)
     {
         return ProductResource::collection(Product::query()
-            ->with('store', 'productCategory', 'images')
+            ->with('store', 'productCategory', 'images', 'mainImage')
             ->orderByDesc('created_at')
             ->paginate($request->input('per_page', 10)));
     }

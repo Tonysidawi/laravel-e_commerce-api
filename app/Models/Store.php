@@ -2,16 +2,16 @@
 
 namespace App\Models;
 
+use App\HasImage;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Arr;
 
 class Store extends Model
 {
-    use HasFactory;
+    use HasFactory, HasImage;
 
     protected $guarded = [
         'id',
@@ -60,7 +60,7 @@ class Store extends Model
 
         static::syncImages($store, Arr::get($attributes, 'images', []));
 
-        return $store->fresh(['images']);
+        return $store->fresh(['images', 'mainImage']);
     }
 
     public static function updateStore(Store $store, array $attributes): self
@@ -95,7 +95,7 @@ class Store extends Model
             static::syncImages($store, $attributes['images']);
         }
 
-        return $store->fresh(['images']);
+        return $store->fresh(['images', 'mainImage']);
     }
 
     protected static function syncImages(Store $store, array $images): void
@@ -122,20 +122,6 @@ class Store extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function images(): MorphMany
-    {
-        return $this->morphMany(Images::class, 'imageable');
-    }
-
-    public function setMainImage(): void
-    {
-        if ($this->images()->where('is_main', true)->exists()) {
-            return;
-        }
-
-        $this->images()->oldest('id')->first()?->update(['is_main' => true]);
-    }
-
     public function products(): HasMany
     {
         return $this->hasMany(Product::class);
@@ -146,6 +132,6 @@ class Store extends Model
      */
     public function loadStoreRelations()
     {
-        return $this->load('images');
+        return $this->load(['images', 'mainImage']);
     }
 }

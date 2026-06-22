@@ -79,6 +79,10 @@ class ProductControllerTest extends TestCase
                     ->where('data.images.0.key', 'tmp/photo.jpg')
                     ->where('data.images.0.name', 'photo.jpg')
                     ->where('data.images.0.content_type', 'image/jpeg')
+                    ->has('data.main_image')
+                    ->where('data.main_image.id', '123e4567-e89b-12d3-a456-426614174000')
+                    ->where('data.main_image.key', 'tmp/photo.jpg')
+                    ->where('data.main_image.is_main', true)
                     ->etc()
             );
     }
@@ -130,6 +134,10 @@ class ProductControllerTest extends TestCase
                     ->where('data.images.0.key', 'tmp/photo.jpg')
                     ->where('data.images.0.name', 'photo.jpg')
                     ->where('data.images.0.content_type', 'image/jpeg')
+                    ->has('data.main_image')
+                    ->where('data.main_image.id', '123e4567-e89b-12d3-a456-426614174000')
+                    ->where('data.main_image.key', 'tmp/photo.jpg')
+                    ->where('data.main_image.is_main', true)
                     ->etc()
             );
     }
@@ -154,6 +162,7 @@ class ProductControllerTest extends TestCase
             'key' => 'tmp/photo.jpg',
             'name' => 'photo.jpg',
             'content_type' => 'image/jpeg',
+            'is_main' => true,
         ]);
 
         $this->actingAs($user)->getJson("/api/products/{$product->id}")
@@ -172,6 +181,9 @@ class ProductControllerTest extends TestCase
                     ->where('data.images.0.key', $product->images->first()->key)
                     ->where('data.images.0.name', $product->images->first()->name)
                     ->where('data.images.0.content_type', $product->images->first()->content_type)
+                    ->where('data.main_image.id', $product->images->first()->id)
+                    ->where('data.main_image.key', 'tmp/photo.jpg')
+                    ->where('data.main_image.is_main', true)
                     ->etc()
             );
     }

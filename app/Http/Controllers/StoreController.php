@@ -16,7 +16,7 @@ class StoreController extends Controller
     public function index(StoreIndexRequest $request)
     {
         return StoreResource::collection(auth()->user()->stores()
-            ->with('images')
+            ->with('images', 'mainImage')
             ->latest()
             ->paginate($request->input('per_page', 10)));
     }

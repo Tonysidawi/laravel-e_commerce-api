@@ -31,7 +31,7 @@ class ProductCategoryIndexRequest extends FormRequest
     {
         return Product::query()
             ->where('product_category_id', $productCategory->id)
-            ->with('store', 'productCategory', 'images')
+            ->with('store', 'productCategory', 'images', 'mainImage')
             ->orderByDesc('created_at')
             ->paginate($this->input('per_page', 10));
     }
