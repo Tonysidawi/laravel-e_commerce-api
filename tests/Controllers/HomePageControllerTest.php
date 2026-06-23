@@ -11,6 +11,9 @@ class HomePageControllerTest extends TestCase
 {
     use RefreshDatabase;
 
+    /**
+     * GET 'home-page'
+     */
     public function test_user_can_get_home_page_products()
     {
         $stores = Store::factory()->count(5)->create();

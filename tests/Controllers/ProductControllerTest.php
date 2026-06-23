@@ -14,6 +14,9 @@ class ProductControllerTest extends TestCase
 {
     use RefreshDatabase;
 
+    /**
+     * GET 'products'
+     */
     public function test_user_can_get_all_products(): void
     {
         $user = User::factory()->create();
@@ -37,6 +40,9 @@ class ProductControllerTest extends TestCase
             );
     }
 
+    /**
+     * POST 'products'
+     */
     public function test_user_can_create_a_product(): void
     {
         $user = User::factory()->create();
@@ -54,15 +60,17 @@ class ProductControllerTest extends TestCase
             'description' => 'Test Description',
             'price' => 100.00,
             'details' => ['color' => 'red', 'size' => 'M'],
-            'images' => [[
-                'id' => '123e4567-e89b-12d3-a456-426614174000',
-                'key' => 'tmp/photo.jpg',
-                'name' => 'photo.jpg',
-                'content_type' => 'image/jpeg',
-            ]],
+            'images' => [
+                [
+                    'url' => 'tmp/photo.jpg',
+                    'is_main' => true,
+                ],
+            ],
         ];
 
-        $this->actingAs($user)->postJson('/api/products', $data)
+        $response = $this->actingAs($user)->postJson('/api/products', $data);
+
+        $response
             ->assertSuccessful()
             ->assertJson(
                 fn (AssertableJson $json) => $json
@@ -74,19 +82,17 @@ class ProductControllerTest extends TestCase
                     ->where('data.name', 'Test Product')
                     ->where('data.description', 'Test Description')
                     ->where('data.details', ['color' => 'red', 'size' => 'M'])
-                    ->has('data.images', 1)
-                    ->where('data.images.0.id', '123e4567-e89b-12d3-a456-426614174000')
-                    ->where('data.images.0.key', 'tmp/photo.jpg')
-                    ->where('data.images.0.name', 'photo.jpg')
-                    ->where('data.images.0.content_type', 'image/jpeg')
                     ->has('data.main_image')
-                    ->where('data.main_image.id', '123e4567-e89b-12d3-a456-426614174000')
-                    ->where('data.main_image.key', 'tmp/photo.jpg')
+                    ->where('data.main_image.url', 'tmp/photo.jpg')
                     ->where('data.main_image.is_main', true)
+                    ->has('data.images', 1)
                     ->etc()
             );
     }
 
+    /**
+     * PUT 'products/{product}'
+     */
     public function test_user_can_update_a_product(): void
     {
         $user = User::factory()->create();
@@ -111,9 +117,8 @@ class ProductControllerTest extends TestCase
             'details' => ['color' => 'red', 'size' => 'M'],
             'images' => [[
                 'id' => '123e4567-e89b-12d3-a456-426614174000',
-                'key' => 'tmp/photo.jpg',
-                'name' => 'photo.jpg',
-                'content_type' => 'image/jpeg',
+                'url' => 'tmp/photo.jpg',
+                'is_main' => true,
             ]],
         ];
 
@@ -130,18 +135,18 @@ class ProductControllerTest extends TestCase
                     ->where('data.price', '100.00')
                     ->where('data.details', ['color' => 'red', 'size' => 'M'])
                     ->has('data.images', 1)
-                    ->where('data.images.0.id', '123e4567-e89b-12d3-a456-426614174000')
-                    ->where('data.images.0.key', 'tmp/photo.jpg')
-                    ->where('data.images.0.name', 'photo.jpg')
-                    ->where('data.images.0.content_type', 'image/jpeg')
+                    ->where('data.images.0.url', 'tmp/photo.jpg')
+                    ->where('data.images.0.is_main', true)
                     ->has('data.main_image')
-                    ->where('data.main_image.id', '123e4567-e89b-12d3-a456-426614174000')
-                    ->where('data.main_image.key', 'tmp/photo.jpg')
+                    ->where('data.main_image.url', 'tmp/photo.jpg')
                     ->where('data.main_image.is_main', true)
                     ->etc()
             );
     }
 
+    /**
+     * GET 'products/{product}'
+     */
     public function test_user_can_show_a_product(): void
     {
         $user = User::factory()->create();
@@ -158,10 +163,7 @@ class ProductControllerTest extends TestCase
         ]);
 
         $product->images()->create([
-            'id' => '123e4567-e89b-12d3-a456-426614174000',
-            'key' => 'tmp/photo.jpg',
-            'name' => 'photo.jpg',
-            'content_type' => 'image/jpeg',
+            'url' => 'tmp/photo.jpg',
             'is_main' => true,
         ]);
 
@@ -178,16 +180,18 @@ class ProductControllerTest extends TestCase
                     ->where('data.details', $product->details)
                     ->has('data.images', 1)
                     ->where('data.images.0.id', $product->images->first()->id)
-                    ->where('data.images.0.key', $product->images->first()->key)
-                    ->where('data.images.0.name', $product->images->first()->name)
-                    ->where('data.images.0.content_type', $product->images->first()->content_type)
+                    ->where('data.images.0.url', $product->images->first()->url)
+                    ->where('data.images.0.is_main', $product->images->first()->is_main)
                     ->where('data.main_image.id', $product->images->first()->id)
-                    ->where('data.main_image.key', 'tmp/photo.jpg')
+                    ->where('data.main_image.url', 'tmp/photo.jpg')
                     ->where('data.main_image.is_main', true)
                     ->etc()
             );
     }
 
+    /**
+     * DELETE 'products/{product}'
+     */
     public function test_user_can_delete_a_product(): void
     {
         $user = User::factory()->create();

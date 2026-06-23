@@ -13,6 +13,9 @@ class ProductCategoryTest extends TestCase
 {
     use RefreshDatabase;
 
+    /**
+     * GET 'product-categories/{productCategory}/products'
+     */
     public function test_fetching_products_for_a_category(): void
     {
         $store = Store::factory()->create();

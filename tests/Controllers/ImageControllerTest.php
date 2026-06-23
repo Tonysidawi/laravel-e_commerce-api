@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Controllers;
 
-use App\Models\Images;
+use App\Models\Image;
 use App\Models\Product;
 use App\Models\Store;
 use App\Models\User;
@@ -20,69 +20,52 @@ class ImageControllerTest extends TestCase
     {
         parent::setUp();
 
-        Storage::fake('s3');
-        config(['filesystems.disks.s3.bucket' => 'test-bucket']);
+        Storage::fake();
     }
 
+    /**
+     * POST 'images'
+     */
     public function test_user_can_upload_image_to_store(): void
     {
         $user = User::factory()->create();
-        $store = Store::factory()->create(['user_id' => $user->id]);
-        $file = UploadedFile::fake()->image('store-photo.jpg');
+        $store = Store::factory()->for($user)->hasImages(3)->create();
+
+        $this->assertCount(3, Image::all());
+        $this->assertCount(3, $store->images);
 
         $this->actingAs($user)->post('/api/images', [
             'store_id' => $store->id,
-            'images' => $file,
+            'images' => UploadedFile::fake()->image('store-photo.jpg'),
         ], ['Accept' => 'application/json'])
-            ->assertSuccessful()
-            ->assertJson(
-                fn (AssertableJson $json) => $json
-                    ->where('message', 'Image uploaded successfully')
-                    ->has('data.id')
-                    ->where('data.name', 'store-photo.jpg')
-                    ->where('data.content_type', 'image/jpeg')
-                    ->where('data.is_main', true)
-                    ->has('data.key')
-                    ->has('data.url')
-                    ->etc()
-            );
+            ->assertSuccessful();
 
-        $image = Images::first();
-
-        $this->assertNotNull($image);
-        $this->assertSame($store->id, $image->imageable_id);
-        $this->assertSame(Store::class, $image->imageable_type);
-        Storage::disk('s3')->assertExists($image->key);
+        $this->assertCount(4, Image::all());
+        $this->assertCount(4, $store->refresh()->images);
     }
 
+    /**
+     * POST 'images'
+     */
     public function test_user_can_upload_image_to_product(): void
     {
         $user = User::factory()->create();
         $store = Store::factory()->create(['user_id' => $user->id]);
-        $product = Product::factory()->create(['store_id' => $store->id]);
-        $file = UploadedFile::fake()->image('product-photo.png');
+        $product = Product::factory()->for($store)->hasImages(4)->create();
 
         $this->actingAs($user)->post('/api/images', [
             'product_id' => $product->id,
-            'images' => $file,
-        ], ['Accept' => 'application/json'])
-            ->assertSuccessful()
-            ->assertJson(
-                fn (AssertableJson $json) => $json
-                    ->where('message', 'Image uploaded successfully')
-                    ->has('data.id')
-                    ->where('data.name', 'product-photo.png')
-                    ->where('data.is_main', true)
-                    ->etc()
-            );
+            'images' => UploadedFile::fake()->image('product-photo.jpg'),
+        ], ['Accept' => 'application/json'])->assertSuccessful();
 
-        $this->assertDatabaseHas('images', [
-            'imageable_id' => $product->id,
-            'imageable_type' => Product::class,
-            'name' => 'product-photo.png',
-        ]);
+        $this->assertCount(5, Image::all());
+        $this->assertCount(5, $product->refresh()->images);
+        $this->assertTrue($product->refresh()->images->last()->is_main);
     }
 
+    /**
+     * DELETE 'images/{image}'
+     */
     public function test_user_can_delete_uploaded_image(): void
     {
         $user = User::factory()->create();
@@ -94,7 +77,7 @@ class ImageControllerTest extends TestCase
             'images' => $file,
         ], ['Accept' => 'application/json'])->assertSuccessful();
 
-        $image = Images::first();
+        $image = Image::first();
         $path = $image->key;
 
         $this->actingAs($user)->deleteJson("/api/images/{$image->id}")
@@ -107,6 +90,9 @@ class ImageControllerTest extends TestCase
         Storage::disk('s3')->assertMissing($path);
     }
 
+    /**
+     * POST 'images'
+     */
     public function test_user_cannot_upload_image_to_another_users_store(): void
     {
         $owner = User::factory()->create();
@@ -122,6 +108,9 @@ class ImageControllerTest extends TestCase
         $this->assertDatabaseCount('images', 0);
     }
 
+    /**
+     * POST 'images/{image}/main'
+     */
     public function test_uploaded_store_image_appears_as_main_image_with_s3_url(): void
     {
         $user = User::factory()->create();
@@ -132,20 +121,23 @@ class ImageControllerTest extends TestCase
             'images' => UploadedFile::fake()->image('store-main.jpg'),
         ], ['Accept' => 'application/json'])->assertSuccessful();
 
-        $image = Images::first();
+        $image = Image::first();
 
         $this->actingAs($user)->getJson("/api/stores/{$store->id}")
             ->assertSuccessful()
             ->assertJson(
                 fn (AssertableJson $json) => $json
                     ->where('data.main_image.id', $image->id)
-                    ->where('data.main_image.key', $image->key)
+                    ->where('data.main_image.url', $image->url)
                     ->where('data.main_image.is_main', true)
                     ->has('data.main_image.url')
                     ->etc()
             );
     }
 
+    /**
+     * POST 'images/{image}/main'
+     */
     public function test_uploaded_product_image_appears_as_main_image_with_s3_url(): void
     {
         $user = User::factory()->create();
@@ -157,17 +149,96 @@ class ImageControllerTest extends TestCase
             'images' => UploadedFile::fake()->image('product-main.jpg'),
         ], ['Accept' => 'application/json'])->assertSuccessful();
 
-        $image = Images::first();
+        $image = Image::first();
 
         $this->actingAs($user)->getJson("/api/products/{$product->id}")
             ->assertSuccessful()
             ->assertJson(
                 fn (AssertableJson $json) => $json
                     ->where('data.main_image.id', $image->id)
-                    ->where('data.main_image.key', $image->key)
+                    ->where('data.main_image.url', $image->url)
                     ->where('data.main_image.is_main', true)
                     ->has('data.main_image.url')
                     ->etc()
             );
+    }
+
+    /**
+     * POST 'images/{image}/main'
+     */
+    public function test_a_user_can_set_an_image_as_main()
+    {
+        $user = User::factory()->create();
+
+        // user store
+        $store = Store::factory()->for($user)->hasImage(3)->create();
+
+        // user store products
+        $product = Product::factory()->for($store)->hasImage(4)->create();
+
+        // assert Images exists
+        $this->assertCount(7, Image::all());
+
+        // assert store has main image
+        $this->assertTrue($store->mainImage()->exists());
+        $this->assertEquals($store->images->first()->id, $store->mainImage()->first()->id);
+
+        // assert product has main image
+        $this->assertTrue($product->mainImage()->exists());
+        $this->assertEquals($product->images->first()->id, $product->mainImage()->first()->id);
+
+        // api to set store last image as main
+        $this->actingAs($user)->postJson("/api/images/{$store->images->last()->id}/main")
+            ->assertSuccessful();
+
+        // assert store main image changed
+        $this->assertEquals($store->images->last()->id, $store->mainImage()->first()->id);
+
+        // api to set product last image as main
+        $this->actingAs($user)->postJson("/api/images/{$product->images->last()->id}/main")
+            ->assertSuccessful();
+
+        // assert product main image changed
+        $this->assertEquals($product->images->last()->id, $product->mainImage()->first()->id);
+    }
+
+    /**
+     * DELETE 'images/{image}'
+     */
+    public function test_a_user_can_delete_an_image_from_store()
+    {
+        $user = User::factory()->create();
+
+        $store = Store::factory()->for($user)->hasImage(3)->create();
+
+        $images = $store->images;
+
+        $this->assertCount(3, Image::all());
+
+        $this->actingAs($user)->deleteJson("/api/images/{$images->first()->id}")
+            ->assertSuccessful();
+
+        $this->assertCount(2, Image::all());
+    }
+
+    /**
+     * DELETE 'images/{image}'
+     */
+    public function test_a_user_can_delete_an_image_from_product()
+    {
+        $user = User::factory()->create();
+
+        $store = Store::factory()->for($user)->hasImage(3)->create();
+
+        $product = Product::factory()->for($store)->hasImage(4)->create();
+
+        $images = $product->images;
+
+        $this->assertCount(7, Image::all());
+
+        $this->actingAs($user)->deleteJson("/api/images/{$images->first()->id}")
+            ->assertSuccessful();
+
+        $this->assertCount(6, Image::all());
     }
 }

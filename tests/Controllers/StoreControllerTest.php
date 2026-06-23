@@ -12,6 +12,9 @@ class StoreControllerTest extends TestCase
 {
     use RefreshDatabase;
 
+    /**
+     * GET 'stores'
+     */
     public function test_user_get_all_stores_belonging_to_them(): void
     {
         $user = User::factory()
@@ -47,6 +50,9 @@ class StoreControllerTest extends TestCase
             );
     }
 
+    /**
+     * POST 'stores'
+     */
     public function test_user_can_create_a_store(): void
     {
         $user = User::factory()->create();
@@ -71,15 +77,17 @@ class StoreControllerTest extends TestCase
             'bio' => 'Test Bio',
             'is_active' => true,
             'is_online' => true,
-            'images' => [[
-                'id' => '123e4567-e89b-12d3-a456-426614174000',
-                'key' => 'tmp/photo.jpg',
-                'name' => 'photo.jpg',
-                'content_type' => 'image/jpeg',
-            ]],
+            'images' => [
+                [
+                    'url' => 'tmp/photo.jpg',
+                    'is_main' => true,
+                ],
+            ],
         ];
 
-        $this->actingAs($user)->postJson('/api/stores', $data)
+        $response = $this->actingAs($user)->postJson('/api/stores', $data);
+
+        $response
             ->assertSuccessful()
             ->assertJson(
                 fn (AssertableJson $json) => $json
@@ -87,13 +95,16 @@ class StoreControllerTest extends TestCase
                     ->where('data.name', 'Test Store')
                     ->where('data.phone_number', '0244444444')
                     ->has('data.main_image')
-                    ->where('data.main_image.id', '123e4567-e89b-12d3-a456-426614174000')
-                    ->where('data.main_image.key', 'tmp/photo.jpg')
+                    ->where('data.main_image.url', 'tmp/photo.jpg')
                     ->where('data.main_image.is_main', true)
+                    ->has('data.images', 1)
                     ->etc()
             );
     }
 
+    /**
+     * PUT 'stores/{store}'
+     */
     public function test_user_can_update_a_store(): void
     {
         $user = User::factory()->has(Store::factory())->create();
@@ -117,6 +128,9 @@ class StoreControllerTest extends TestCase
             );
     }
 
+    /**
+     * DELETE 'stores/{store}'
+     */
     public function test_user_can_delete_a_store(): void
     {
         $user = User::factory()->has(Store::factory())->create();

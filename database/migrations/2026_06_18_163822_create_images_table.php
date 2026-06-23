@@ -9,13 +9,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('images', function (Blueprint $table) {
-            $table->uuid('id')->primary();
-            $table->string('key');
-            $table->string('bucket')->nullable();
-            $table->string('name');
-            $table->string('content_type');
-            $table->boolean('is_main')->default(false);
+            $table->id();
             $table->morphs('imageable');
+            $table->string('url')->nullable();
+            $table->boolean('is_main')->default(false);
             $table->timestamps();
         });
     }

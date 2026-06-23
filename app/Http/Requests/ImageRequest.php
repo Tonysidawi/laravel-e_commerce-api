@@ -2,15 +2,17 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Image;
 use App\Models\Product;
 use App\Models\Store;
 use Illuminate\Contracts\Validation\ValidationRule;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class ImageRequest extends FormRequest
 {
-    public Store|Product|null $model = null;
+    public ?Model $model = null;
 
     public function authorize(): bool
     {
@@ -41,18 +43,25 @@ class ImageRequest extends FormRequest
                 Rule::requiredIf(! $this->input('store_id')),
                 Rule::exists('products', 'id'),
             ],
-            'images' => ['required', 'image', 'mimes:jpeg,png,jpg', 'max:2048'],
+            'images' => 'required', 'image', 'mimes:jpeg,png,jpg', 'max:2048',
         ];
     }
 
-    public function getModel(): Store|Product|null
+    public function makeImage(): Model
+    {
+        Image::makeMany($this->model, [$this->file('images')]);
+
+        return $this->model;
+    }
+
+    public function getModel(): ?Model
     {
         if ($this->input('store_id')) {
             return Store::find($this->input('store_id'));
         }
 
         if ($this->input('product_id')) {
-            return Product::with('store')->find($this->input('product_id'));
+            return Product::find($this->input('product_id'));
         }
 
         return null;

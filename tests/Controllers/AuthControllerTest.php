@@ -4,9 +4,9 @@ namespace Tests\Feature\Controllers;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Testing\Fluent\AssertableJson;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Testing\Fluent\AssertableJson;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -14,7 +14,9 @@ class AuthControllerTest extends TestCase
 {
     use RefreshDatabase;
 
-    // post
+    /**
+     * POST 'auth/register'
+     */
     public function test_user_can_register()
     {
         $data = [
@@ -32,7 +34,7 @@ class AuthControllerTest extends TestCase
         $this->json('POST', '/api/auth/register', $data)
             ->assertSuccessful()
             ->assertJson(
-                fn(AssertableJson $json) => $json->has('id')
+                fn (AssertableJson $json) => $json->has('id')
                     ->has('first_name')
                     ->has('last_name')
                     ->has('email')
@@ -44,6 +46,9 @@ class AuthControllerTest extends TestCase
             );
     }
 
+    /**
+     * POST 'auth/login'
+     */
     public function test_user_can_login()
     {
         $user = User::factory()->create();
@@ -64,6 +69,9 @@ class AuthControllerTest extends TestCase
         $this->assertTrue(Auth::check());
     }
 
+    /**
+     * POST 'auth/logout'
+     */
     public function test_user_can_logout()
     {
         $user = User::factory()->create();
@@ -79,6 +87,9 @@ class AuthControllerTest extends TestCase
             ]);
     }
 
+    /**
+     * POST 'auth/reset-password'
+     */
     public function test_user_can_reset_password()
     {
         $user = User::factory()->create(['password' => 'old_password']);

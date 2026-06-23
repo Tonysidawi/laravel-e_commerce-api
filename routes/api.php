@@ -30,5 +30,6 @@ Route::apiResource('products', ProductController::class);
 /**
  * Image Routes
  */
+Route::post('images/{image}/main', [ImageController::class, 'setAsMain']);
 Route::post('images', [ImageController::class, 'store']);
 Route::delete('images/{image}', [ImageController::class, 'destroy']);

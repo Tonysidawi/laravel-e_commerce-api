@@ -2,20 +2,30 @@
 
 namespace App\Traits;
 
-use App\Models\Images;
+use App\Models\Image;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 
 trait HasImage
 {
+    public static function bootHasMedia()
+    {
+        static::deleted(function ($model) {
+            Image::deleteImages($model->images);
+        });
+    }
+
+    /**
+     * Relationships.
+     */
     public function images(): MorphMany
     {
-        return $this->morphMany(Images::class, 'imageable');
+        return $this->morphMany(Image::class, 'imageable');
     }
 
     public function mainImage(): MorphOne
     {
-        return $this->morphOne(Images::class, 'imageable')->where('is_main', true);
+        return $this->morphOne(Image::class, 'imageable')->where('is_main', true);
     }
 
     public function setMainImage(): void
@@ -31,12 +41,8 @@ trait HasImage
     {
         foreach ($images as $image) {
             $model->images()->create([
-                'id' => $image['id'],
-                'key' => $image['key'],
-                'bucket' => $image['bucket'] ?? null,
-                'name' => $image['name'],
-                'content_type' => $image['content_type'],
-                'is_main' => $image['is_main'] ?? false,
+                'url' => $image['url'],
+                'is_main' => $image['is_main'] ?? ! $model->mainImage()->exists(),
             ]);
         }
 

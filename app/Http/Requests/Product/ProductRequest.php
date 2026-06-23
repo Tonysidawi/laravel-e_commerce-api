@@ -30,11 +30,8 @@ class ProductRequest extends FormRequest
             'price' => ['nullable', 'numeric', 'min:0'],
             'details' => ['nullable', 'array'],
             'images' => ['required', 'array'],
-            'images.*.id' => ['required_with:images', 'uuid'],
-            'images.*.key' => ['required_with:images|string|max:1024|regex:/^tmp\/[a-zA-Z0-9_.-]+$/'],
-            'images.*.bucket' => ['nullable|string|max:255'],
-            'images.*.name' => ['required_with:images|string|max:255'],
-            'images.*.content_type' => ['required_with:images|string|max:255'],
+            'images.*.url' => ['required_with:images', 'string', 'max:1024', 'regex:/^tmp\/[a-zA-Z0-9_.-]+$/'],
+            'images.*.is_main' => ['nullable', 'boolean'],
         ];
     }
 }

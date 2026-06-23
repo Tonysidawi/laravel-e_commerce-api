@@ -2,9 +2,11 @@
 
 namespace Database\Factories;
 
+use App\Models\Image;
 use App\Models\Store;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Http\UploadedFile;
 
 /**
  * @extends Factory<Store>
@@ -38,5 +40,25 @@ class StoreFactory extends Factory
             'is_active' => fake()->boolean(),
             'is_online' => fake()->boolean(),
         ];
+    }
+
+    public function hasImage(int $count = 1): self
+    {
+        return $this->afterCreating(function (Store $store) use ($count) {
+            $images = Image::factory($count)->create([
+                'imageable_id' => $store->id,
+                'imageable_type' => Store::class,
+            ]);
+
+            $images->each(function (Image $image) {
+                $imageName = "image{$image->id}";
+                $path = UploadedFile::fake()->image($imageName)->storeAs('images/stores', $imageName, config('filesystems.default'));
+
+                $image->update([
+                    'url' => $path,
+                    'is_main' => $image->imageable->mainImage()->exists() ? false : true,
+                ]);
+            });
+        });
     }
 }
