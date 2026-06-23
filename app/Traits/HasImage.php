@@ -26,4 +26,20 @@ trait HasImage
 
         $this->images()->oldest('id')->first()?->update(['is_main' => true]);
     }
+
+    protected static function syncImages(self $model, array $images): void
+    {
+        foreach ($images as $image) {
+            $model->images()->create([
+                'id' => $image['id'],
+                'key' => $image['key'],
+                'bucket' => $image['bucket'] ?? null,
+                'name' => $image['name'],
+                'content_type' => $image['content_type'],
+                'is_main' => $image['is_main'] ?? false,
+            ]);
+        }
+
+        $model->setMainImage();
+    }
 }

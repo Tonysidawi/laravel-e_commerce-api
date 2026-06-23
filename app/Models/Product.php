@@ -65,22 +65,6 @@ class Product extends Model
         return $product->fresh(['images', 'mainImage']);
     }
 
-    protected static function syncImages(Product $product, array $images): void
-    {
-        foreach ($images as $image) {
-            $product->images()->create([
-                'id' => $image['id'],
-                'key' => $image['key'],
-                'bucket' => $image['bucket'] ?? null,
-                'name' => $image['name'],
-                'content_type' => $image['content_type'],
-                'is_main' => $image['is_main'] ?? false,
-            ]);
-        }
-
-        $product->setMainImage();
-    }
-
     /**
      * Table relations
      */
