@@ -40,7 +40,7 @@ class Product extends Model
         $product->price = Arr::get($attributes, 'price');
         $product->save();
 
-        static::syncImages($product, Arr::get($attributes, 'images', []));
+        Image::makeMany($product, Arr::get($attributes, 'images'));
 
         return $product->fresh(['images', 'mainImage']);
     }
@@ -49,18 +49,7 @@ class Product extends Model
     {
         abort_if($product->store->user_id !== auth()->id(), 403);
 
-        $product->fill(Arr::only($attributes, [
-            'name',
-            'description',
-            'price',
-            'details',
-            'product_category_id',
-        ]))->save();
-
-        if (array_key_exists('images', $attributes)) {
-            $product->images()->delete();
-            static::syncImages($product, $attributes['images']);
-        }
+        $product->fill($attributes)->save();
 
         return $product->fresh(['images', 'mainImage']);
     }

@@ -7,6 +7,8 @@ use App\Models\ProductCategory;
 use App\Models\Store;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Testing\Fluent\AssertableJson;
 use Tests\TestCase;
 
@@ -45,6 +47,8 @@ class ProductControllerTest extends TestCase
      */
     public function test_user_can_create_a_product(): void
     {
+        Storage::fake('s3');
+
         $user = User::factory()->create();
 
         $store = Store::factory()->create([
@@ -61,10 +65,7 @@ class ProductControllerTest extends TestCase
             'price' => 100.00,
             'details' => ['color' => 'red', 'size' => 'M'],
             'images' => [
-                [
-                    'url' => 'tmp/photo.jpg',
-                    'is_main' => true,
-                ],
+                UploadedFile::fake()->image('product-main.jpg'),
             ],
         ];
 
@@ -83,11 +84,13 @@ class ProductControllerTest extends TestCase
                     ->where('data.description', 'Test Description')
                     ->where('data.details', ['color' => 'red', 'size' => 'M'])
                     ->has('data.main_image')
-                    ->where('data.main_image.url', 'tmp/photo.jpg')
+                    ->has('data.main_image.url')
                     ->where('data.main_image.is_main', true)
                     ->has('data.images', 1)
                     ->etc()
             );
+
+        Storage::disk('s3')->assertExists(Product::first()->mainImage->url);
     }
 
     /**
@@ -115,33 +118,21 @@ class ProductControllerTest extends TestCase
             'description' => 'Test Description',
             'price' => 100.00,
             'details' => ['color' => 'red', 'size' => 'M'],
-            'images' => [[
-                'id' => '123e4567-e89b-12d3-a456-426614174000',
-                'url' => 'tmp/photo.jpg',
-                'is_main' => true,
-            ]],
         ];
 
         $this->actingAs($user)->putJson("/api/products/{$product->id}", $updatedData)
             ->assertSuccessful()
-            ->assertJson(
-                fn (AssertableJson $json) => $json
-                    ->where('message', 'Product updated successfully')
-                    ->where('data.id', $product->id)
-                    ->where('data.store_id', $store->id)
-                    ->where('data.product_category_id', $productCategory->id)
-                    ->where('data.name', 'Test Product')
-                    ->where('data.description', 'Test Description')
-                    ->where('data.price', '100.00')
-                    ->where('data.details', ['color' => 'red', 'size' => 'M'])
-                    ->has('data.images', 1)
-                    ->where('data.images.0.url', 'tmp/photo.jpg')
-                    ->where('data.images.0.is_main', true)
-                    ->has('data.main_image')
-                    ->where('data.main_image.url', 'tmp/photo.jpg')
-                    ->where('data.main_image.is_main', true)
-                    ->etc()
-            );
+            ->assertJson([
+                'data' => [
+                    'id' => $product->id,
+                    'name' => $updatedData['name'],
+                    'product_category_id' => $productCategory->id,
+                    'description' => $updatedData['description'],
+                    'price' => $updatedData['price'],
+                    'details' => $updatedData['details'],
+                ],
+                'message' => 'Product updated successfully',
+            ]);
     }
 
     /**

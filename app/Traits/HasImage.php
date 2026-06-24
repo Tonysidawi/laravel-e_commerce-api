@@ -28,24 +28,15 @@ trait HasImage
         return $this->morphOne(Image::class, 'imageable')->where('is_main', true);
     }
 
-    public function setMainImage(): void
+    public function mainImageUrl(): ?string
     {
-        if ($this->images()->where('is_main', true)->exists()) {
-            return;
-        }
-
-        $this->images()->oldest('id')->first()?->update(['is_main' => true]);
+        return $this->mainImage()?->first()?->url;
     }
 
-    protected static function syncImages(self $model, array $images): void
+    public function setMainImage(): void
     {
-        foreach ($images as $image) {
-            $model->images()->create([
-                'url' => $image['url'],
-                'is_main' => $image['is_main'] ?? ! $model->mainImage()->exists(),
-            ]);
+        if (! $this->mainImage && $this->images()->count() > 0) {
+            $this->refresh()->images()->first()->update(['is_main' => true]);
         }
-
-        $model->setMainImage();
     }
 }

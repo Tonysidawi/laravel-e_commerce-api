@@ -43,7 +43,7 @@ class ImageRequest extends FormRequest
                 Rule::requiredIf(! $this->input('store_id')),
                 Rule::exists('products', 'id'),
             ],
-            'images' => 'required', 'image', 'mimes:jpeg,png,jpg', 'max:2048',
+            'images' => 'required|image|mimes:jpeg,png,jpg|max:2048',
         ];
     }
 

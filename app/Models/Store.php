@@ -22,10 +22,8 @@ class Store extends Model
         return [
             'is_active' => 'boolean',
             'is_online' => 'boolean',
-            'is_brand_partner' => 'boolean',
             'policies' => 'array',
             'category_ids' => 'array',
-            'subscription_ends_at' => 'datetime',
         ];
     }
 
@@ -49,16 +47,13 @@ class Store extends Model
         $store->snapchat = Arr::get($attributes, 'snapchat');
         $store->x = Arr::get($attributes, 'x');
         $store->country = Arr::get($attributes, 'country');
-        $store->country_code = Arr::get($attributes, 'country_code');
-        $store->longitude = Arr::get($attributes, 'longitude');
-        $store->latitude = Arr::get($attributes, 'latitude');
         $store->bio = Arr::get($attributes, 'bio');
         $store->is_active = Arr::get($attributes, 'is_active', false);
         $store->is_online = Arr::get($attributes, 'is_online', true);
         $store->policies = Arr::get($attributes, 'policies');
         $store->save();
 
-        static::syncImages($store, Arr::get($attributes, 'images', []));
+        Image::makeMany($store, Arr::get($attributes, 'images'));
 
         return $store->fresh(['images', 'mainImage']);
     }
@@ -67,33 +62,7 @@ class Store extends Model
     {
         abort_if($store->user_id !== auth()->id(), 403);
 
-        $store->fill(Arr::only($attributes, [
-            'name',
-            'phone_number',
-            'location',
-            'city',
-            'region',
-            'district',
-            'website',
-            'facebook',
-            'instagram',
-            'tiktok',
-            'snapchat',
-            'x',
-            'country',
-            'country_code',
-            'longitude',
-            'latitude',
-            'bio',
-            'is_active',
-            'is_online',
-            'policies',
-        ]))->save();
-
-        if (array_key_exists('images', $attributes)) {
-            $store->images()->delete();
-            static::syncImages($store, $attributes['images']);
-        }
+        $store->fill($attributes)->save();
 
         return $store->fresh(['images', 'mainImage']);
     }

@@ -24,15 +24,14 @@ class ProductUpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'store_id' => ['required', 'exists:stores,id'],
-            'product_category_id' => ['nullable', 'exists:product_categories,id'],
-            'name' => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string'],
-            'price' => ['nullable', 'numeric', 'min:0'],
-            'details' => ['nullable', 'array'],
-            'images' => ['required', 'array'],
-            'images.*.url' => ['required_with:images', 'string', 'max:1024', 'regex:/^tmp\/[a-zA-Z0-9_.-]+$/'],
-            'images.*.is_main' => ['nullable', 'boolean'],
+            'store_id' => 'required', 'exists:stores,id',
+            'product_category_id' => 'nullable', 'exists:product_categories,id',
+            'name' => 'required', 'string', 'max:255',
+            'description' => 'nullable', 'string',
+            'price' => 'nullable', 'numeric', 'min:0',
+            'details' => 'nullable', 'array',
+            'images' => 'nullable|array',
+            'images.*' => 'nullable|image|mimes:jpeg,png,jpg|max:2048', // size should not be greater than 2MB
         ];
     }
 }

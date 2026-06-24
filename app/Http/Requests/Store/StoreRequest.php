@@ -36,15 +36,11 @@ class StoreRequest extends FormRequest
             'snapchat' => 'nullable|string|max:255',
             'x' => 'nullable|string|max:255',
             'country' => 'required|string|max:255',
-            'country_code' => 'required|string|size:2',
-            'longitude' => 'required|numeric|between:-180,180',
-            'latitude' => 'required|numeric|between:-90,90',
             'bio' => 'nullable|string',
             'is_active' => 'nullable|boolean',
             'is_online' => 'nullable|boolean',
-            'images' => 'required|array',
-            'images.*.url' => 'required_with:images|string|max:1024|regex:/^tmp\/[a-zA-Z0-9_.-]+$/',
-            'images.*.is_main' => 'nullable|boolean',
+            'images' => 'nullable|array',
+            'images.*' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
             'policies' => 'nullable|array',
         ];
     }

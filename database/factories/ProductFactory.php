@@ -46,7 +46,7 @@ class ProductFactory extends Factory
 
             $images->each(function (Image $image) {
                 $imageName = "image{$image->id}";
-                $path = UploadedFile::fake()->image($imageName)->storeAs('images/stores', $imageName, config('filesystems.default'));
+                $path = UploadedFile::fake()->image($imageName)->storeAs('images/products', 's3');
 
                 $image->update([
                     'url' => $path,

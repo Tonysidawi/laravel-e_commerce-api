@@ -33,9 +33,6 @@ class StoreFactory extends Factory
             'snapchat' => fake()->url(),
             'x' => fake()->url(),
             'country' => fake()->country(),
-            'country_code' => 'GH',
-            'longitude' => fake()->longitude(),
-            'latitude' => fake()->latitude(),
             'bio' => fake()->text(),
             'is_active' => fake()->boolean(),
             'is_online' => fake()->boolean(),
@@ -52,7 +49,7 @@ class StoreFactory extends Factory
 
             $images->each(function (Image $image) {
                 $imageName = "image{$image->id}";
-                $path = UploadedFile::fake()->image($imageName)->storeAs('images/stores', $imageName, config('filesystems.default'));
+                $path = UploadedFile::fake()->image($imageName)->storeAs('images/stores', 's3');
 
                 $image->update([
                     'url' => $path,

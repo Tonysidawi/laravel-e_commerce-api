@@ -15,10 +15,6 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->integer('views')->default(0);
-            $table->integer('reviews_count')->default(0);
-            $table->integer('rating_count')->default(0);
-            $table->integer('followers_count')->default(0);
-            $table->integer('number_of_posts')->default(1);
             $table->string('name');
             $table->string('phone_number');
             $table->string('location')->nullable();
@@ -32,10 +28,7 @@ return new class extends Migration
             $table->string('snapchat')->nullable();
             $table->string('x')->nullable();
             $table->string('country');
-            $table->char('country_code', 2)->index()->default('GH');
             $table->decimal('rating_average', 3, 2)->default(0);
-            $table->decimal('longitude', 11, 8)->index();
-            $table->decimal('latitude', 11, 8)->index();
             $table->text('bio')->nullable();
             $table->boolean('is_active')->index()->default(false);
             $table->boolean('is_online')->index()->default(true);

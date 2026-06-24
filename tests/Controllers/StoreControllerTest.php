@@ -5,6 +5,8 @@ namespace Tests\Feature\Controllers;
 use App\Models\Store;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Testing\Fluent\AssertableJson;
 use Tests\TestCase;
 
@@ -55,6 +57,8 @@ class StoreControllerTest extends TestCase
      */
     public function test_user_can_create_a_store(): void
     {
+        Storage::fake('s3');
+
         $user = User::factory()->create();
 
         $data = [
@@ -71,35 +75,54 @@ class StoreControllerTest extends TestCase
             'snapchat' => 'https://snapchat.com',
             'x' => 'https://x.com',
             'country' => 'Test Country',
-            'country_code' => 'GH',
-            'longitude' => 0,
-            'latitude' => 0,
             'bio' => 'Test Bio',
             'is_active' => true,
             'is_online' => true,
             'images' => [
-                [
-                    'url' => 'tmp/photo.jpg',
-                    'is_main' => true,
-                ],
+                UploadedFile::fake()->image('store-main.jpg'),
             ],
         ];
 
-        $response = $this->actingAs($user)->postJson('/api/stores', $data);
-
-        $response
+        $this->actingAs($user)->postJson('/api/stores', $data)
             ->assertSuccessful()
             ->assertJson(
                 fn (AssertableJson $json) => $json
+                    ->hasAll('success', 'data', 'message')
+                    ->where('success', true)
                     ->where('message', 'Store created successfully')
-                    ->where('data.name', 'Test Store')
-                    ->where('data.phone_number', '0244444444')
-                    ->has('data.main_image')
-                    ->where('data.main_image.url', 'tmp/photo.jpg')
-                    ->where('data.main_image.is_main', true)
-                    ->has('data.images', 1)
-                    ->etc()
+                    ->has(
+                        'data',
+                        fn (AssertableJson $json) => $json
+                            ->hasAll(
+                                'id',
+                                'name',
+                                'phone_number',
+                                'location',
+                                'city',
+                                'region',
+                                'district',
+                                'main_image',
+                                'website',
+                                'facebook',
+                                'instagram',
+                                'tiktok',
+                                'snapchat',
+                                'x',
+                                'country',
+                                'bio',
+                                'is_active',
+                                'is_online',
+                                'images',
+                                'products_count',
+                                'services_count',
+                                'created_at',
+                                'updated_at',
+                            )
+                            ->etc()
+                    )
             );
+
+        Storage::disk('s3')->assertExists(Store::first()->mainImage->url);
     }
 
     /**

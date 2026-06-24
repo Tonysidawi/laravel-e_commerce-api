@@ -23,6 +23,9 @@ class Image extends Model
 
     public const IMAGE_FOLDER = 'images';
 
+    /**
+     * Crud methods
+     */
     public static function makeMany(Model $model, ?array $images): void
     {
         if (! $images) {
@@ -33,7 +36,7 @@ class Image extends Model
         $folder = self::IMAGE_FOLDER;
 
         foreach ($images as $image) {
-            $path = Storage::put($folder."/{$modelName}", $image);
+            $path = Storage::disk('s3')->put($folder."/{$modelName}", $image);
 
             $model->images()->create([
                 'url' => $path,
@@ -48,7 +51,7 @@ class Image extends Model
     public function deleteImage(): void
     {
         // delete image from s3
-        Storage::delete($this->url);
+        Storage::disk('s3')->delete($this->url);
 
         // delete image from database
         $this->delete();
@@ -60,21 +63,27 @@ class Image extends Model
         $urls = $images->pluck('url')->toArray();
 
         // delete images from s3
-        Storage::delete($urls);
+        Storage::disk('s3')->delete($urls);
 
         // delete images from database
         self::destroy($ids);
     }
 
-    public function imageable(): MorphTo
-    {
-        return $this->morphTo();
-    }
-
+    /**
+     * Mutators
+     */
     public function setAsMain(): void
     {
         $this->imageable->images()->update(['is_main' => false]);
 
         $this->update(['is_main' => true]);
+    }
+
+    /**
+     * Relationships
+     */
+    public function imageable(): MorphTo
+    {
+        return $this->morphTo();
     }
 }
