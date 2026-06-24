@@ -18,7 +18,7 @@ class ProductController extends Controller
         return ProductResource::collection(Product::query()
             ->with('store', 'productCategory', 'images', 'mainImage')
             ->orderByDesc('created_at')
-            ->paginate($request->input('per_page', 10)));
+            ->paginate(20));
     }
 
     /**

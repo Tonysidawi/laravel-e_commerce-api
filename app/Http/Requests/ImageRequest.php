@@ -43,13 +43,13 @@ class ImageRequest extends FormRequest
                 Rule::requiredIf(! $this->input('store_id')),
                 Rule::exists('products', 'id'),
             ],
-            'images' => 'required|image|mimes:jpeg,png,jpg|max:2048',
+            'image' => 'required|image|mimes:jpeg,png,jpg|max:2048',
         ];
     }
 
     public function makeImage(): Model
     {
-        Image::makeMany($this->model, [$this->file('images')]);
+        Image::makeMany($this->model, [$this->file('image')]);
 
         return $this->model;
     }

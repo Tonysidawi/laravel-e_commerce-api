@@ -11,7 +11,8 @@ use Illuminate\Support\Arr;
 
 class Store extends Model
 {
-    use HasFactory, HasImage;
+    use HasFactory;
+    use HasImage;
 
     protected $guarded = [
         'id',
@@ -23,8 +24,20 @@ class Store extends Model
             'is_active' => 'boolean',
             'is_online' => 'boolean',
             'policies' => 'array',
-            'category_ids' => 'array',
         ];
+    }
+
+    /**
+     * Relationships
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function products(): HasMany
+    {
+        return $this->hasMany(Product::class);
     }
 
     /**
@@ -65,19 +78,6 @@ class Store extends Model
         $store->fill($attributes)->save();
 
         return $store->fresh(['images', 'mainImage']);
-    }
-
-    /**
-     * Relationships
-     */
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class);
-    }
-
-    public function products(): HasMany
-    {
-        return $this->hasMany(Product::class);
     }
 
     /**

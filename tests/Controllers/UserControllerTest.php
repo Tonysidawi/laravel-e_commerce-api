@@ -31,16 +31,14 @@ class UserControllerTest extends TestCase
 
         $this->actingAs($user)->json('POST', "api/users/{$user->id}", $updateData)
             ->assertSuccessful()
-            ->assertJson([
+            ->assertJsonFragment([
                 'message' => 'Profile updated successfully',
-                'data' => [
-                    'id' => $user->id,
-                    'first_name' => 'William',
-                    'last_name' => 'Walls',
-                    'email' => 'william@gmail.com',
-                    'phone_number' => '0244444444',
-                    'profile_picture' => 'https://example.com/profile1.jpg',
-                ],
+                'id' => $user->id,
+                'first_name' => 'William',
+                'last_name' => 'Walls',
+                'email' => 'william@gmail.com',
+                'phone_number' => '0244444444',
+                'profile_picture' => 'https://example.com/profile1.jpg',
             ]);
     }
 
@@ -53,16 +51,14 @@ class UserControllerTest extends TestCase
 
         $this->actingAs($user)->get('api/user')
             ->assertSuccessful()
-            ->assertJson([
-                'data' => [
-                    'id' => $user->id,
-                    'first_name' => $user->first_name,
-                    'last_name' => $user->last_name,
-                    'phone_number' => $user->phone_number,
-                    'profile_picture' => $user->profile_picture,
-                    'status' => $user->status,
-                    'role' => $user->role,
-                ],
+            ->assertJsonFragment([
+                'id' => $user->id,
+                'first_name' => $user->first_name,
+                'last_name' => $user->last_name,
+                'phone_number' => $user->phone_number,
+                'profile_picture' => $user->profile_picture,
+                'status' => $user->status,
+                'role' => $user->role,
             ]);
     }
 
@@ -75,7 +71,7 @@ class UserControllerTest extends TestCase
 
         $this->actingAs($user)->delete("api/users/{$user->id}")
             ->assertSuccessful()
-            ->assertJson([
+            ->assertJsonFragment([
                 'message' => 'User deleted successfully',
             ]);
 

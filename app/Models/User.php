@@ -50,6 +50,24 @@ class User extends Authenticatable
     }
 
     /**
+     * Relationships
+     */
+    public function stores(): HasMany
+    {
+        return $this->hasMany(Store::class);
+    }
+
+    public function products(): HasManyThrough
+    {
+        return $this->hasManyThrough(Product::class, Store::class);
+    }
+
+    public function isOwnerOfStore(?Store $store): bool
+    {
+        return $store !== null && $this->id === $store->user_id;
+    }
+
+    /**
      * Crud methods.
      */
     public static function createUser(array $attributes)
@@ -75,23 +93,5 @@ class User extends Authenticatable
         $user->fill($data)->save();
 
         return $user;
-    }
-
-    /**
-     * Relationships
-     */
-    public function stores(): HasMany
-    {
-        return $this->hasMany(Store::class);
-    }
-
-    public function products(): HasManyThrough
-    {
-        return $this->hasManyThrough(Product::class, Store::class);
-    }
-
-    public function isOwnerOfStore(?Store $store): bool
-    {
-        return $store !== null && $this->id === $store->user_id;
     }
 }

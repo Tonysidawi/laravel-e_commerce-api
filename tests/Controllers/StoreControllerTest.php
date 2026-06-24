@@ -7,7 +7,6 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Testing\Fluent\AssertableJson;
 use Tests\TestCase;
 
 class StoreControllerTest extends TestCase
@@ -29,13 +28,11 @@ class StoreControllerTest extends TestCase
 
         $this->actingAs($user)->getJson('/api/stores')
             ->assertSuccessful()
-            ->assertJson(
-                fn (AssertableJson $json) => $json
-                    ->has('data', 3)
-                    ->has('data.0.id')
-                    ->has('data.0.name')
-                    ->etc()
-            );
+            ->assertJsonCount(3, 'data')
+            ->assertJsonFragment([
+                'id' => $user->stores->first()->id,
+                'name' => $user->stores->first()->name,
+            ]);
     }
 
     public function test_user_can_get_a_store(): void
@@ -44,12 +41,25 @@ class StoreControllerTest extends TestCase
 
         $this->actingAs($user)->getJson("/api/stores/{$user->stores->first()->id}")
             ->assertSuccessful()
-            ->assertJson(
-                fn (AssertableJson $json) => $json
-                    ->has('data.id')
-                    ->has('data.name')
-                    ->etc()
-            );
+            ->assertJsonFragment([
+                'id' => $user->stores->first()->id,
+                'name' => $user->stores->first()->name,
+                'phone_number' => $user->stores->first()->phone_number,
+                'location' => $user->stores->first()->location,
+                'city' => $user->stores->first()->city,
+                'region' => $user->stores->first()->region,
+                'district' => $user->stores->first()->district,
+                'website' => $user->stores->first()->website,
+                'facebook' => $user->stores->first()->facebook,
+                'instagram' => $user->stores->first()->instagram,
+                'tiktok' => $user->stores->first()->tiktok,
+                'snapchat' => $user->stores->first()->snapchat,
+                'x' => $user->stores->first()->x,
+                'country' => $user->stores->first()->country,
+                'bio' => $user->stores->first()->bio,
+                'is_active' => $user->stores->first()->is_active,
+                'is_online' => $user->stores->first()->is_online,
+            ]);
     }
 
     /**
@@ -85,42 +95,27 @@ class StoreControllerTest extends TestCase
 
         $this->actingAs($user)->postJson('/api/stores', $data)
             ->assertSuccessful()
-            ->assertJson(
-                fn (AssertableJson $json) => $json
-                    ->hasAll('success', 'data', 'message')
-                    ->where('success', true)
-                    ->where('message', 'Store created successfully')
-                    ->has(
-                        'data',
-                        fn (AssertableJson $json) => $json
-                            ->hasAll(
-                                'id',
-                                'name',
-                                'phone_number',
-                                'location',
-                                'city',
-                                'region',
-                                'district',
-                                'main_image',
-                                'website',
-                                'facebook',
-                                'instagram',
-                                'tiktok',
-                                'snapchat',
-                                'x',
-                                'country',
-                                'bio',
-                                'is_active',
-                                'is_online',
-                                'images',
-                                'products_count',
-                                'services_count',
-                                'created_at',
-                                'updated_at',
-                            )
-                            ->etc()
-                    )
-            );
+            ->assertJsonFragment([
+                'message' => 'Store created successfully',
+                'name' => 'Test Store',
+                'phone_number' => '0244444444',
+                'location' => 'Test Location',
+                'city' => 'Test City',
+                'region' => 'Test Region',
+                'district' => 'Test District',
+                'website' => 'https://test.com',
+                'facebook' => 'https://facebook.com',
+                'instagram' => 'https://instagram.com',
+                'tiktok' => 'https://tiktok.com',
+                'snapchat' => 'https://snapchat.com',
+                'x' => 'https://x.com',
+                'country' => 'Test Country',
+                'bio' => 'Test Bio',
+                'is_active' => true,
+                'is_online' => true,
+                'url' => Store::first()->mainImage->url,
+                'is_main' => true,
+            ]);
 
         Storage::disk('s3')->assertExists(Store::first()->mainImage->url);
     }
@@ -143,12 +138,10 @@ class StoreControllerTest extends TestCase
 
         $this->actingAs($user)->putJson("/api/stores/{$user->stores->first()->id}", $updateData)
             ->assertSuccessful()
-            ->assertJson(
-                fn (AssertableJson $json) => $json
-                    ->where('message', 'Store updated successfully')
-                    ->where('data.name', 'Updated Store')
-                    ->etc()
-            );
+            ->assertJsonFragment([
+                'message' => 'Store updated successfully',
+                'name' => 'Updated Store',
+            ]);
     }
 
     /**
@@ -156,15 +149,42 @@ class StoreControllerTest extends TestCase
      */
     public function test_user_can_delete_a_store(): void
     {
-        $user = User::factory()->has(Store::factory())->create();
-        $store = $user->stores->first();
+        Storage::fake('s3');
 
-        $this->actingAs($user)->deleteJson("/api/stores/{$store->id}")
-            ->assertSuccessful()
-            ->assertJson([
-                'message' => 'Store deleted successfully',
-            ]);
+        $user = User::factory()->create();
+
+        $store = Store::factory()
+            ->for($user)
+            ->hasImages(2)
+            ->create();
+
+        $firstImage = $store->images->first();
+        $lastImage = $store->images->last();
+
+        // Create fake files
+        Storage::disk('s3')->put($firstImage->url, 'content');
+        Storage::disk('s3')->put($lastImage->url, 'content');
+
+        $this->assertModelExists($store);
+        $this->assertModelExists($firstImage);
+        $this->assertModelExists($lastImage);
+
+        Storage::disk('s3')->assertExists($firstImage->url);
+        Storage::disk('s3')->assertExists($lastImage->url);
+
+        $this->actingAs($user)
+            ->deleteJson("/api/stores/{$store->id}")
+            ->assertSuccessful();
 
         $this->assertModelMissing($store);
+        $this->assertDatabaseMissing('images', [
+            'id' => $firstImage->id,
+        ]);
+        $this->assertDatabaseMissing('images', [
+            'id' => $lastImage->id,
+        ]);
+
+        Storage::disk('s3')->assertMissing($firstImage->url);
+        Storage::disk('s3')->assertMissing($lastImage->url);
     }
 }

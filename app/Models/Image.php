@@ -21,6 +21,14 @@ class Image extends Model
         'is_main' => 'boolean',
     ];
 
+    /**
+     * Relationships
+     */
+    public function imageable(): MorphTo
+    {
+        return $this->morphTo();
+    }
+
     public const IMAGE_FOLDER = 'images';
 
     /**
@@ -77,13 +85,5 @@ class Image extends Model
         $this->imageable->images()->update(['is_main' => false]);
 
         $this->update(['is_main' => true]);
-    }
-
-    /**
-     * Relationships
-     */
-    public function imageable(): MorphTo
-    {
-        return $this->morphTo();
     }
 }

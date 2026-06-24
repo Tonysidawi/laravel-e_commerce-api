@@ -37,9 +37,8 @@ class StoreResource extends JsonResource
             'bio' => $this->bio,
             'is_active' => $this->is_active,
             'is_online' => $this->is_online,
+            'policies' => $this->policies,
             'images' => ImageResource::collection($this->whenLoaded('images')),
-            'products_count' => $this->products_count ?? 0,
-            'services_count' => $this->services_count ?? 0,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

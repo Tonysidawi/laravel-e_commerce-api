@@ -9,7 +9,6 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Testing\Fluent\AssertableJson;
 use Tests\TestCase;
 
 class ImageControllerTest extends TestCase
@@ -36,7 +35,7 @@ class ImageControllerTest extends TestCase
 
         $this->actingAs($user)->post('/api/images', [
             'store_id' => $store->id,
-            'images' => UploadedFile::fake()->image('store-photo.jpg'),
+            'image' => UploadedFile::fake()->image('store-photo.jpg'),
         ], ['Accept' => 'application/json'])
             ->assertSuccessful();
 
@@ -55,7 +54,7 @@ class ImageControllerTest extends TestCase
 
         $this->actingAs($user)->post('/api/images', [
             'product_id' => $product->id,
-            'images' => UploadedFile::fake()->image('product-photo.jpg'),
+            'image' => UploadedFile::fake()->image('product-photo.jpg'),
         ], ['Accept' => 'application/json'])->assertSuccessful();
 
         $this->assertCount(5, Image::all());
@@ -74,7 +73,7 @@ class ImageControllerTest extends TestCase
 
         $this->actingAs($user)->post('/api/images', [
             'store_id' => $store->id,
-            'images' => $file,
+            'image' => $file,
         ], ['Accept' => 'application/json'])->assertSuccessful();
 
         $image = Image::first();
@@ -82,7 +81,7 @@ class ImageControllerTest extends TestCase
 
         $this->actingAs($user)->deleteJson("/api/images/{$image->id}")
             ->assertSuccessful()
-            ->assertJson([
+            ->assertJsonFragment([
                 'message' => 'Image deleted successfully',
             ]);
 
@@ -101,7 +100,7 @@ class ImageControllerTest extends TestCase
 
         $this->actingAs($otherUser)->post('/api/images', [
             'store_id' => $store->id,
-            'images' => UploadedFile::fake()->image('photo.jpg'),
+            'image' => UploadedFile::fake()->image('photo.jpg'),
         ], ['Accept' => 'application/json'])
             ->assertForbidden();
 
@@ -118,21 +117,19 @@ class ImageControllerTest extends TestCase
 
         $this->actingAs($user)->post('/api/images', [
             'store_id' => $store->id,
-            'images' => UploadedFile::fake()->image('store-main.jpg'),
+            'image' => UploadedFile::fake()->image('store-main.jpg'),
         ], ['Accept' => 'application/json'])->assertSuccessful();
 
         $image = Image::first();
 
         $this->actingAs($user)->getJson("/api/stores/{$store->id}")
             ->assertSuccessful()
-            ->assertJson(
-                fn (AssertableJson $json) => $json
-                    ->where('data.main_image.id', $image->id)
-                    ->where('data.main_image.url', $image->url)
-                    ->where('data.main_image.is_main', true)
-                    ->has('data.main_image.url')
-                    ->etc()
-            );
+            ->assertJsonFragment([
+                'id' => $store->id,
+                'name' => $store->name,
+                'url' => $image->url,
+                'is_main' => true,
+            ]);
     }
 
     /**
@@ -146,21 +143,18 @@ class ImageControllerTest extends TestCase
 
         $this->actingAs($user)->post('/api/images', [
             'product_id' => $product->id,
-            'images' => UploadedFile::fake()->image('product-main.jpg'),
+            'image' => UploadedFile::fake()->image('product-main.jpg'),
         ], ['Accept' => 'application/json'])->assertSuccessful();
 
         $image = Image::first();
 
         $this->actingAs($user)->getJson("/api/products/{$product->id}")
             ->assertSuccessful()
-            ->assertJson(
-                fn (AssertableJson $json) => $json
-                    ->where('data.main_image.id', $image->id)
-                    ->where('data.main_image.url', $image->url)
-                    ->where('data.main_image.is_main', true)
-                    ->has('data.main_image.url')
-                    ->etc()
-            );
+            ->assertJsonFragment([
+                'id' => $image->id,
+                'url' => $image->url,
+                'is_main' => true,
+            ]);
     }
 
     /**

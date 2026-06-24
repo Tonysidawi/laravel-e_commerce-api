@@ -10,7 +10,8 @@ use Illuminate\Support\Arr;
 
 class Product extends Model
 {
-    use HasFactory, HasImage;
+    use HasFactory;
+    use HasImage;
 
     protected $fillable = [
         'store_id',
@@ -25,6 +26,24 @@ class Product extends Model
         'details' => 'array',
         'price' => 'decimal:2',
     ];
+
+    /**
+     * Relationships
+     */
+    public function store(): BelongsTo
+    {
+        return $this->belongsTo(Store::class);
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function productCategory(): BelongsTo
+    {
+        return $this->belongsTo(ProductCategory::class);
+    }
 
     /**
      * CRUD
@@ -65,23 +84,5 @@ class Product extends Model
             'images',
             'mainImage',
         ]);
-    }
-
-    /**
-     * Relationships
-     */
-    public function store(): BelongsTo
-    {
-        return $this->belongsTo(Store::class);
-    }
-
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class);
-    }
-
-    public function productCategory(): BelongsTo
-    {
-        return $this->belongsTo(ProductCategory::class);
     }
 }

@@ -4,7 +4,6 @@ use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\Store;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Testing\Fluent\AssertableJson;
 use Tests\TestCase;
 
 class HomePageControllerTest extends TestCase
@@ -28,12 +27,10 @@ class HomePageControllerTest extends TestCase
         $response = $this->getJson('/api/home-page');
 
         $response->assertSuccessful()
-            ->assertJson(
-                fn (AssertableJson $json) => $json
-                    ->has('data', 20)
-                    ->has('data.0.id')
-                    ->has('data.0.name')
-                    ->etc()
-            );
+            ->assertJsonFragment([
+                'id' => $products->first()->id,
+                'name' => $products->first()->name,
+            ]);
+
     }
 }

@@ -18,7 +18,7 @@ class StoreController extends Controller
         return StoreResource::collection(auth()->user()->stores()
             ->with('images', 'mainImage')
             ->latest()
-            ->paginate($request->input('per_page', 10)));
+            ->paginate(20));
     }
 
     /**

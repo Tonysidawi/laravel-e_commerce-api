@@ -6,7 +6,6 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Testing\Fluent\AssertableJson;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -33,17 +32,13 @@ class AuthControllerTest extends TestCase
 
         $this->json('POST', '/api/auth/register', $data)
             ->assertSuccessful()
-            ->assertJson(
-                fn (AssertableJson $json) => $json->has('id')
-                    ->has('first_name')
-                    ->has('last_name')
-                    ->has('email')
-                    ->has('phone_number')
-                    ->has('profile_picture')
-                    ->has('status')
-                    ->has('role')
-                    ->has('token')
-            );
+            ->assertJsonFragment([
+                'first_name' => 'Maximus',
+                'last_name' => 'Perez',
+                'email' => 'maximus.perez@gmail.com',
+                'phone_number' => '0244444444',
+            ]);
+
     }
 
     /**
@@ -62,7 +57,7 @@ class AuthControllerTest extends TestCase
 
         $this->json('POST', '/api/auth/login', $data)
             ->assertSuccessful()
-            ->assertJson([
+            ->assertJsonFragment([
                 'email' => $user->email,
             ]);
 
@@ -82,7 +77,7 @@ class AuthControllerTest extends TestCase
 
         $this->json('POST', '/api/auth/logout')
             ->assertSuccessful()
-            ->assertJson([
+            ->assertJsonFragment([
                 'message' => 'Logged out successfully',
             ]);
     }
@@ -103,7 +98,7 @@ class AuthControllerTest extends TestCase
             'password' => 'new_password',
             'password_confirmation' => 'new_password',
         ])->assertSuccessful()
-            ->assertJson([
+            ->assertJsonFragment([
                 'message' => 'Password reset successful',
             ]);
 

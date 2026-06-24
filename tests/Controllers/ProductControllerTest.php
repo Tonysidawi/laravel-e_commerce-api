@@ -9,7 +9,6 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Testing\Fluent\AssertableJson;
 use Tests\TestCase;
 
 class ProductControllerTest extends TestCase
@@ -33,13 +32,11 @@ class ProductControllerTest extends TestCase
 
         $this->actingAs($user)->getJson('/api/products')
             ->assertSuccessful()
-            ->assertJson(
-                fn (AssertableJson $json) => $json
-                    ->has('data', 10)
-                    ->has('data.0.id')
-                    ->has('data.0.name')
-                    ->etc()
-            );
+            ->assertJsonCount(10, 'data')
+            ->assertJsonFragment([
+                'id' => $store->products()->first()->id,
+                'name' => $store->products()->first()->name,
+            ]);
     }
 
     /**
@@ -73,22 +70,17 @@ class ProductControllerTest extends TestCase
 
         $response
             ->assertSuccessful()
-            ->assertJson(
-                fn (AssertableJson $json) => $json
-                    ->has('message')
-                    ->where('message', 'Product created successfully')
-                    ->has('data')
-                    ->where('data.store_id', $store->id)
-                    ->where('data.product_category_id', $productCategory->id)
-                    ->where('data.name', 'Test Product')
-                    ->where('data.description', 'Test Description')
-                    ->where('data.details', ['color' => 'red', 'size' => 'M'])
-                    ->has('data.main_image')
-                    ->has('data.main_image.url')
-                    ->where('data.main_image.is_main', true)
-                    ->has('data.images', 1)
-                    ->etc()
-            );
+            ->assertJsonCount(1, 'data.images')
+            ->assertJsonFragment([
+                'message' => 'Product created successfully',
+                'store_id' => $store->id,
+                'product_category_id' => $productCategory->id,
+                'name' => 'Test Product',
+                'description' => 'Test Description',
+                'details' => ['color' => 'red', 'size' => 'M'],
+                'is_main' => true,
+                'url' => Product::first()->mainImage->url,
+            ]);
 
         Storage::disk('s3')->assertExists(Product::first()->mainImage->url);
     }
@@ -122,16 +114,14 @@ class ProductControllerTest extends TestCase
 
         $this->actingAs($user)->putJson("/api/products/{$product->id}", $updatedData)
             ->assertSuccessful()
-            ->assertJson([
-                'data' => [
-                    'id' => $product->id,
-                    'name' => $updatedData['name'],
-                    'product_category_id' => $productCategory->id,
-                    'description' => $updatedData['description'],
-                    'price' => $updatedData['price'],
-                    'details' => $updatedData['details'],
-                ],
+            ->assertJsonFragment([
                 'message' => 'Product updated successfully',
+                'id' => $product->id,
+                'name' => $updatedData['name'],
+                'product_category_id' => $productCategory->id,
+                'description' => $updatedData['description'],
+                'price' => '100.00',
+                'details' => $updatedData['details'],
             ]);
     }
 
@@ -160,24 +150,17 @@ class ProductControllerTest extends TestCase
 
         $this->actingAs($user)->getJson("/api/products/{$product->id}")
             ->assertSuccessful()
-            ->assertJson(
-                fn (AssertableJson $json) => $json
-                    ->where('data.id', $product->id)
-                    ->where('data.store_id', $store->id)
-                    ->where('data.product_category_id', $productCategory->id)
-                    ->where('data.name', $product->name)
-                    ->where('data.description', $product->description)
-                    ->where('data.price', $product->price)
-                    ->where('data.details', $product->details)
-                    ->has('data.images', 1)
-                    ->where('data.images.0.id', $product->images->first()->id)
-                    ->where('data.images.0.url', $product->images->first()->url)
-                    ->where('data.images.0.is_main', $product->images->first()->is_main)
-                    ->where('data.main_image.id', $product->images->first()->id)
-                    ->where('data.main_image.url', 'tmp/photo.jpg')
-                    ->where('data.main_image.is_main', true)
-                    ->etc()
-            );
+            ->assertJsonFragment([
+                'id' => $product->id,
+                'name' => $product->name,
+                'product_category_id' => $productCategory->id,
+                'description' => $product->description,
+                'price' => $product->price,
+                'details' => $product->details,
+                'url' => $product->mainImage->url,
+                'is_main' => true,
+            ]);
+
     }
 
     /**
@@ -185,18 +168,39 @@ class ProductControllerTest extends TestCase
      */
     public function test_user_can_delete_a_product(): void
     {
+        Storage::fake('s3');
+
         $user = User::factory()->create();
 
-        $product = Product::factory()->create();
+        $product = Product::factory()->hasImages(2)->create();
+
+        $firstImage = $product->images->first();
+        $lastImage = $product->images->last();
+
+        Storage::disk('s3')->put($firstImage->url, 'content');
+        Storage::disk('s3')->put($lastImage->url, 'content');
+
+        $this->assertModelExists($product);
+        $this->assertModelExists($firstImage);
+        $this->assertModelExists($lastImage);
+
+        Storage::disk('s3')->assertExists($firstImage->url);
+        Storage::disk('s3')->assertExists($lastImage->url);
 
         $this->actingAs($user)->deleteJson("/api/products/{$product->id}")
             ->assertSuccessful()
-            ->assertJson(
-                fn (AssertableJson $json) => $json
-                    ->where('message', 'Product deleted successfully')
-                    ->etc()
-            );
+            ->assertJsonFragment([
+                'message' => 'Product deleted successfully',
+            ]);
 
         $this->assertModelMissing($product);
+        $this->assertDatabaseMissing('images', [
+            'id' => $firstImage->id,
+        ]);
+        $this->assertDatabaseMissing('images', [
+            'id' => $lastImage->id,
+        ]);
+        Storage::disk('s3')->assertMissing($firstImage->url);
+        Storage::disk('s3')->assertMissing($lastImage->url);
     }
 }

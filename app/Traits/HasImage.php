@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\MorphOne;
 
 trait HasImage
 {
-    public static function bootHasMedia()
+    public static function bootHasImage()
     {
         static::deleted(function ($model) {
             Image::deleteImages($model->images);
