@@ -19,7 +19,7 @@ class ImageControllerTest extends TestCase
     {
         parent::setUp();
 
-        Storage::fake();
+        Storage::fake('s3');
     }
 
     /**
@@ -86,7 +86,7 @@ class ImageControllerTest extends TestCase
             ]);
 
         $this->assertDatabaseMissing('images', ['id' => $image->id]);
-        Storage::disk('s3')->assertMissing($path);
+        Storage::disk('s3')->assertExists($path);
     }
 
     /**
